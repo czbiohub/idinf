@@ -1,0 +1,47 @@
+---
+title: "Id Inf"
+output: html_document
+---
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(here)
+library(pryr)
+```
+
+```{r}
+reads_clinical <- read_tsv(here("retained-NR.retained-NT.filter.unmapped.cdhit.ZINTER_TRIZ_100K_CFU.1.m8.lca_forJB"))
+reads_mb <- read_tsv(here("SRR172902-FAUHGnt-n1000.m8.v2_forJB"))
+```
+
+The clinical sample has 1.5 m reads with 1.7 m mappings to 4k species.
+
+The microbiome sample has 3 m reads with 13 m mappings to 34k species.
+
+```{r}
+dim(reads_mb)
+length(unique(reads_mb$qseqid))
+length(unique(reads_mb$tax_id))
+dim(reads_clinical)
+length(unique(reads_clinical$qseqid))
+length(unique(reads_clinical$tax_id))
+```
+
+There are 3697 species involved. That many equations may be somewhat unpleasant to solve. It is likely that the problem will split (as with FLASH). If each read gives a multiedge in a graph, connecting many species, then (ratios) of species in each component of that graph can be determined independently. Doing this will be easier in python, where I know the sparse matrix libraries.
+
+```{r}
+reads_clinical %>% group_by(qseqid) %>% summarize(mappings = n()) %>% ggplot(aes(x = mappings)) + geom_histogram(bins = 10) + scale_y_log10()
+```
+
+```{r}
+reads_mb %>% group_by(qseqid) %>% summarize(mappings = n()) %>% ggplot(aes(x = mappings)) + geom_histogram(bins = 10) + scale_y_log10()
+```
+
+Bitscore distribution
+
+```{r}
+reads_clinical %>% ggplot(aes(x = bitscore)) + geom_histogram()
+```
+
