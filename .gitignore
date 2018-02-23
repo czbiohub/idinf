@@ -95,3 +95,5 @@ ENV/
 # Rope project settings
 .ropeproject
 
+# NCBI ETE3 support
+taxdump.tar.gz
