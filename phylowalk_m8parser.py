@@ -117,10 +117,14 @@ for i in set_of_sets:
 
                 lineage_list = []
                 for j in a:
-                        try:
-                                lineage_list.append(ncbi.get_lineage(j))
-                        except:
-                                print('tax id invalid: ' + str(j))
+                    try:
+                        lin = ncbi.get_lineage(j)
+                        if len(lin) > 6: # this is a reasonable classification, include it in the ancestor calculation
+                            lineage_list.append(lin)
+                        else:
+                            print('not a useful alignment: ' + str(j))  # this aligned to "uncultured bacterium" or "unclassified Bacteria"
+                    except:
+                        print('tax id invalid: ' + str(j))
 
                 # create DF with lineage taxID and # of times it occurred.
                 counts = pd.Series(Counter(sum(lineage_list,[])))
@@ -135,8 +139,18 @@ for i in set_of_sets:
                 # debugging 01/10/18
                 try:
                     # the LCA is the value with the smallest rank out of all taxIDs with count = len(lineage_list)
-                    CA = str(int(result_df[result_df['s2'] == min(result_df['s2'])]['s1'][0]))
-                    level = str(result_df[result_df['s2'] == min(result_df['s2'])].index[0])
+                    #CA = str(int(result_df[result_df['s2'] == min(result_df['s2'])]['s1'][0]))
+                    #level = str(result_df[result_df['s2'] == min(result_df['s2'])].index[0])
+
+                    # added 3/1 - this takes care of cases where the "no rank" classification is actually more
+                    # precise than the "superkingdom" classification
+                    all_lineages = [ncbi.get_lineage(i) for i in result_df['s1']]
+                    possible_ancestors = [i[-1] for i in all_lineages]
+                    count_ancestors = [sum(all_lineages,[]).count(i) for i in possible_ancestors]
+                    d = dict(zip(possible_ancestors,count_ancestors))
+                    CA = min(d,key=d.get)
+                    level = str(result_df[result_df['s1'] == CA].index[0])
+
                 except:
                     print(result_df)
                     CA = 1
